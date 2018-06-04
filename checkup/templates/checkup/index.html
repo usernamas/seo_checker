@@ -1,0 +1,69 @@
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'checkup/style.css' %}" />
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="#page-top">SEO Checkup</a>
+        <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link js-scroll-trigger" href="/admin">Login</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container text-center" id="urldiv">
+    <h1 class="h3 mb-3 font-weight-normal">SEO Tool</h1>
+    <form class="form-signin" method="POST" action="{% url 'checkup:index' %}" onchange="checkUrl()" onsubmit="start_loader()">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+        <div class="checkbox mb-3">
+        </div>
+        <input type="submit" value="Submit" class="btn btn-lg btn-primary btn-block">
+
+    </form>
+    <div class="loader"></div>
+</div>
+
+<footer class="text-center" id="footer">
+    <p class="mt-5 mb-3 text-muted">© 2018</p>
+</footer>
+
+<script>
+    var input = document.getElementById('id_url');
+    var error_list = document.querySelector('.errorlist');
+    input.classList.add("form-control");
+    input.placeholder =  placeholder="Submit Url";
+
+    if(error_list) {
+        error_list.classList.add("list-group");
+        for (var error of error_list.children) {
+            error.classList.add("alert");
+            error.classList.add('alert-danger');
+        }
+    }
+
+    function checkUrl() {
+        var url = input.value;
+        if(!url.startsWith("http://") && !url.startsWith("https://")){
+            input.value = 'http://' + url;
+        }
+    }
+
+    function start_loader() {
+        $('form').hide();
+        $('.loader').show();
+    }
+</script>

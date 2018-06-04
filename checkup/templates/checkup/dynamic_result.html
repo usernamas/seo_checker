@@ -1,0 +1,43 @@
+{% load filters %}
+
+{% for key, value in content.items %}
+    <tr>
+        <th scope="row" class="speed" value="{% if value.passed|yesno:"yeah,no,maybe" == 'yeah' %}true{% elif value.passed|yesno:"yeah,no,maybe" == 'no' %}false{% elif value.passed|yesno:"yeah,no,maybe" == 'maybe' %}null{% endif %}" id="{{ key }}">{{ key }}</th>
+        <td>
+            {% if value|get_type != 'str' and value|get_type != 'bool' and value|get_type != 'Tag' %}
+                {% if value|length == 1 %}
+                    {{ value|title }}
+                {% elif value|length > 1 %}
+                    {% if value|get_type == 'dict' %}
+                        {% if 'keyword' in key %}
+                            {{ value }}
+                        {% endif %}
+                        {% if value.passed|yesno:"yeah,no,maybe" == 'yeah' %}
+                            <p class="text-success"><i class="material-icons">check</i> {{ value.msg }}{% if value.msg_data %}{{ value.msg_data|safe }}{% endif %}</p>
+                        {% elif value.passed|yesno:"yeah,no,maybe" == 'no' %}
+                            <p class="text-danger"><i class="material-icons">cancel</i> {{ value.msg }}{% if value.msg_data %}{{ value.msg_data|safe }}{% endif %}</p>
+                        {% elif value.passed|yesno:"yeah,no,maybe" == 'maybe' %}
+                            <p class="text-dark"><i class="material-icons">error_outline</i> {{ value.msg }}{% if value.msg_data %}{{ value.msg_data|safe }}{% endif %}</p>
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+
+                        {% if value.html and value.html != '[]' %}
+                            <button class="btn btn-danger btn-sm" {% if key == 'Broken Links' %}disabled{% endif %} type="button" id="{{ key }}-btn" onclick="prepare_modal('{{ key }}')">Details!</button>
+                        {% endif %}
+                    {% else %}
+                        {% for item in value %}
+                            <p><small>{{ item }}</small></p>
+                        {% empty %}
+                            hey<br/>
+                        {% endfor %}
+                    {% endif %}
+                {% else %}
+                    {{ value }}
+                {% endif %}
+            {% else %}
+                {{ value }}
+            {% endif %}
+        </td>
+    </tr>
+{% endfor %}

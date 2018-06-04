@@ -1,0 +1,25 @@
+{% load filters %}
+{% load static %}
+
+<ul>
+{% for key, value in seo_result.items %}
+    <li>
+        <h3>{{ key }} : {{ value|length }} | {{ value|get_type }} -</h3>
+        {% if value|get_type != 'str' and value|get_type != 'bool' and value|get_type != 'Tag' %}
+            {% if value|length == 1 %}
+                {{ value }}
+            {% elif value|length > 1 %}
+                {% for item in value %}
+                    <p><small>{{ item }}</small></p>
+                {% empty %}
+                    hey<br/>
+                {% endfor %}
+            {% else %}
+                {{ value }}
+            {% endif %}
+        {% else %}
+            {{ value }}
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>

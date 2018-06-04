@@ -1,0 +1,23 @@
+Metadata-Version: 2.0
+Name: gglsbl
+Version: 1.4.9
+Summary: Client library for Google Safe Browsing Update API v4
+Home-page: https://github.com/afilipovich/gglsbl
+Author: Aleh Filipovich
+Author-email: aleh@vaolix.com
+License: Apache2
+Keywords: google safe browsing api client
+Platform: UNKNOWN
+Classifier: Operating System :: POSIX
+Classifier: Environment :: Console
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Internet
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Dist: google-api-python-client (>=1.4.2,<2)
+
+UNKNOWN
+
+

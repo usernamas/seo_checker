@@ -1,0 +1,708 @@
+{% load filters %}
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'checkup/style.css' %}" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+
+<!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>-->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/sticky-table-headers"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<!--<script src="https://code.highcharts.com/highcharts.src.js"></script>-->
+
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+
+<script src="https://code.highcharts.com/highcharts-more.js"></script>
+<script src="https://code.highcharts.com/modules/solid-gauge.js"></script>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="/">SEO Checkup</a>
+        <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                {% for category in seo_result.nav_list %}
+                    <li class="nav-item">
+                        <a class="nav-link js-scroll-trigger" onclick="navigate('{{ category }}', 100); return false;" href="#">{{ category }}</a>
+                    </li>
+                {% endfor %}
+                <li class="nav-item">
+                    <a class="nav-link js-scroll-trigger" href="/admin">Login</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div id="body_div">
+<div class="container text-center">
+    <h1>SEO Checkup Score:</h1>
+    <h3 class="text-secondary">{{ seo_result.url }}</h3>
+</div>
+
+<div class="container">
+    <div class="row my-4">
+        <div class="col-lg-3" id="phone">
+            <img class="img-fluid rounded" id="phone_border" src="data:image/jpeg;base64,{{ seo_result.page_speed.screenshot.data }}" alt="">
+        </div>
+        <!-- /.col-lg-8 -->
+        <div class="col-lg-6">
+            <div id="container-speed" style="width: 300px; height: 200px; float: left"></div>
+            <div id="container" style="max-width: 310px; height: 300px; max-height: 300px"></div>
+        </div>
+    <!-- /.col-md-4 -->
+    </div>
+</div>
+
+<div class="container">
+    {% for category, content in seo_result.api_list.items %}
+    <table class="table table-bordered" name="data-table" name="data-table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col"></th>
+                <th scope="col" id="{{ category }}">{{ category }}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for key, value in content.items %}
+            <tr>
+                <th scope="row" class="speed" value="{% if value.urlBlocks %}false{% else %}true{% endif %}" id="{{ value.localizedRuleName }}">{{ value.localizedRuleName }}</th>
+                <td>
+                    {% if value.urlBlocks %}
+                        <p class="text-danger"><i class="material-icons">cancel</i>
+                    {% else %}
+                        <p class="text-success"><i class="material-icons">check</i>
+                    {% endif %}
+
+                    {% if value.summary.args  %}
+                        {{ value.summary.format|format_args:value.summary.args|safe }}
+                    {% else %}
+                        {{ value.summary.format }}
+                    {% endif %}
+                    </p>
+
+                    {% if value.urlBlocks %}
+                        {% if value.urlBlocks.0.header.args %}
+                            <p class="text-danger">{{ value.urlBlocks.0.header.format|format_args:value.urlBlocks.0.header.args|safe }}</p>
+                        {% endif %}
+
+                        {% if value.urlBlocks|length > 1 %}
+                            {% for urlBlock in value.urlBlocks %}
+                                {% if urlBlock.header.result.args %}
+                                    <p class="text-danger">{{ urlBlock.header.format|format_args:urlBlock.header.args|safe }}</p>
+                                {% elif urlBlock.header.args %}
+                                    <p class="text-danger">{{ urlBlock.header.format|format_args:urlBlock.header.args|safe }}</p>
+                                {% elif urlBlock.header.format %}
+                                    <p class="text-danger">{{ urlBlock.header.format }}</p>
+                                {% endif %}
+                                {% if urlBlock.urls %}
+                                    <button class="btn btn-danger btn-sm" type="button" onclick="prepare_modal('page_speed_insights', false, '{{ key }}')">Details!</button>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {% if value.urlBlocks.0.urls %}
+                                <button class="btn btn-danger btn-sm" type="button" onclick="prepare_modal('page_speed_insights', false, '{{ key }}')">Details!</button>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </td>
+            {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    {% endfor %}
+</div>
+
+
+<div class="container">
+    {% for category, content in seo_result.omen.items %}
+        <table class="table table-bordered" name="data-table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col" id="{{ category }}">{{ category }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, value in content.items %}
+                    <tr>
+                        <th scope="row" class="speed" value="{% if value.passed|yesno:"yeah,no,maybe" == 'yeah' %}true{% elif value.passed|yesno:"yeah,no,maybe" == 'no' %}false{% elif value.passed|yesno:"yeah,no,maybe" == 'maybe' %}null{% endif %}" id="{{ key }}">{{ key }}</th>
+                        <td>
+                            {% if value|get_type != 'str' and value|get_type != 'bool' and value|get_type != 'Tag' %}
+                                {% if value|length == 1 %}
+                                    {{ value|title }}
+                                {% elif value|length > 1 %}
+                                    {% if value|get_type == 'dict' %}
+                                        {% if 'keyword' in key %}
+                                            {{ value }}
+                                        {% endif %}
+                                        {% if value.passed|yesno:"yeah,no,maybe" == 'yeah' %}
+                                            <p class="text-success"><i class="material-icons">check</i> {{ value.msg }}{% if value.msg_data %}{{ value.msg_data|safe }}{% endif %}</p>
+                                        {% elif value.passed|yesno:"yeah,no,maybe" == 'no' %}
+                                            <p class="text-danger"><i class="material-icons">cancel</i> {{ value.msg }}{% if value.msg_data %}{{ value.msg_data|safe }}{% endif %}</p>
+                                        {% elif value.passed|yesno:"yeah,no,maybe" == 'maybe' %}
+                                            <p class="text-dark"><i class="material-icons">error_outline</i> {{ value.msg }}{% if value.msg_data %}{{ value.msg_data|safe }}{% endif %}</p>
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+
+                                        {% if value.html and value.html != '[]' %}
+                                            <button class="btn btn-danger btn-sm" type="button" id="{{ key }}-btn" onclick="prepare_modal('{{ key }}')">Details!</button>
+                                        {% endif %}
+                                    {% else %}
+                                        {% for item in value %}
+                                            <p><small>{{ item }}</small></p>
+                                        {% empty %}
+                                            hey<br/>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% else %}
+                                    {{ value }}
+                                {% endif %}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+</div>
+
+</div>
+
+<div class="container">
+    <div class="accordion" id="accordionExample">
+            <div class="card">
+                <div class="card-header bg-dark" name="lightgrey" id="headingOne">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link" name="black-btn" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            High Priority
+                        </button>
+                    </h5>
+                </div>
+                <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">
+                    <div class="card-body">
+                        {{ seo_result.priority_list.high|safe }}
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header bg-dark" name="lightgrey" id="headingTwo">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link collapsed" name="black-btn" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Medium Priority
+                        </button>
+                    </h5>
+                </div>
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
+                    <div class="card-body">
+                        {{ seo_result.priority_list.medium|safe }}
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header bg-dark" name="lightgrey" id="headingThree">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link collapsed" name="black-btn" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            Low Priority
+                        </button>
+                    </h5>
+                </div>
+                <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionExample">
+                    <div class="card-body">
+                        {{ seo_result.priority_list.low|safe }}
+                    </div>
+                </div>
+            </div>
+    </div>
+</div>
+
+<div class="container">
+
+  <!-- The Modal -->
+  <div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Modal Heading</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal body -->
+        <div class="modal-body">
+          Modal body..
+        </div>
+
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="py-3 bg-dark">
+    <div class="container">
+        <p class="m-0 text-center text-white">© 2018</p>
+    </div>
+<!-- /.container -->
+</footer>
+
+<script>
+    var messages = {{ seo_result.messages|safe }};
+    var images = {{ seo_result.images|safe }};
+    {% comment %}
+    var keywords = {{ seo_result.keywords|safe }};
+    {% endcomment %}
+    var url = '{{ seo_result.url }}';
+    var csrf = '{{ csrf_token }}';
+
+    function prepare_modal(key, keyword = false, speed_rule = false) {
+        if(key == 'Keywords' && keyword) {
+            if(keywords) {
+                var first = true;
+                var list_items = '';
+                var divs = '';
+                for (var name in keywords[keyword]) {
+                    list_items += '        <li class="nav-item">' +
+                        '            <a class="nav-link' + (first ? ' active' : '') + '" id="' + name + '-tab" data-toggle="tab" href="#' + name + '" role="tab" aria-controls="' + name + '" aria-selected="' + (first ? 'true' : 'false') + '">' + tab_title(name) + '</a>' +
+                        '        </li>';
+                    divs += '        <div class="tab-pane fade' + (first ? ' show active' : '') + '" id="' + name + '" role="tabpanel" aria-labelledby="' + name + '-tab">' + format_content(keywords[keyword][name], name, keyword) + '</div>';
+
+                    first = false;
+                }
+                var tabs = '<ul class="nav nav-tabs" id="myTab" role="tablist">' + list_items + '</ul><div class="tab-content" id="myTabContent">' + divs + '</div>';
+
+                document.querySelector('#myModal .modal-body').innerHTML = tabs;
+                document.querySelector('#myModal .modal-title').innerHTML = keyword;
+                $('#myModal').modal('show');
+            }
+        }else if(key == 'page_speed_insights' && speed_rule){
+
+            document.querySelector('#myModal .modal-body').innerHTML = format_msg(speed_data[speed_rule], false, true);//str;
+            document.querySelector('#myModal .modal-title').innerHTML = speed_rule;
+            $('#myModal').modal('show');
+        }else{
+            document.querySelector('#myModal .modal-body').innerHTML = format_msg(messages[key], key == 'Image Alt Tag' ? true : false);
+            document.querySelector('#myModal .modal-title').innerHTML = key;
+            if (key == 'Image Alt Tag') {
+                $('small[rel=popover]').popover({
+                    html: true,
+                    trigger: 'hover',
+                    placement: 'bottom',
+                    content: function () {
+                        return images[$(this).data('img')];
+                        //return format_src(images[$(this).data('img')]);
+                    }
+                });
+            }
+            $('#myModal').modal('show');
+        }
+    }
+
+    function format_src(element){
+        console.log(element);
+        element = new DOMParser().parseFromString(element, 'text/html').body.children[0];
+        var src = element.getAttribute('src');
+        src = format_link(format_url(url), src);
+        element.setAttribute('src', src);
+        return element.outerHTML;
+    }
+
+    function format_url(url){
+        url = url.replace('www.', '');
+        url = url.replace('https://', 'http://');
+        url = url.replace('http://', '');
+        url = url.replace('///', '//');
+        return url;
+    }
+
+    function format_link(url, link){
+        if(url.endsWith('/')){
+            url = url.slice(0, -1);
+        }
+        if(!link.startsWith('/')){
+            link = '/' + link;
+        }
+        if(!url.startsWith('http://') && !url.startsWith('https://')){
+            url = 'http://' + url;
+        }
+        return url + link;
+    }
+
+    function check_url(str){
+        if(!str.startsWith(url)){
+            return url + str;
+        }
+    }
+
+    function format_content(data, name, keyword) {
+        var content = '<table class="table">' +
+            '<thead>';
+
+        switch (name) {
+            case 'interest_over_time':
+
+                content += '<tr><th scope="col">Date</th>' +
+                    '<th scope="col">Interest Rate</th>' +
+                    '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+
+                for(var date in data[keyword]){
+                    content += '<tr><th scope="row">' + date.split(' ')[0] + '</th><td>' + data[keyword][date] + '</td></tr>';
+                }
+
+                break;
+            case 'interest_by_region':
+
+                content += '<tr><th scope="col">Region</th>' +
+                    '<th scope="col">Interest Rate</th>' +
+                    '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+
+                for(var row in data[keyword]){
+                    content += '<tr><th scope="row">' + row + '</th><td>' + data[keyword][row] + '</td></tr>';
+                }
+
+                break;
+            case 'related_topics':
+
+                content += '<tr><th scope="col">Topic</th>' +
+                    '<th scope="col">Type</th>' +
+                    '<th scope="col">Value</th>' +
+                    '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+
+                for(var i = 0; i < Object.keys(data[keyword].mid).length; i++){
+                    content += '<tr><th scope="row">' + data[keyword].title[i] + '</th><td>' + data[keyword].type[i] + '</td><td>' + data[keyword].value[i] + '</td></tr>';
+                }
+
+                break;
+            case 'related_queries':
+
+                content += '<tr><th scope="col">Query</th>' +
+                    '<th scope="col">Value</th>' +
+                    '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+
+                var tables = {'top': content, 'rising': content};
+
+                for(var i = 0; i < Object.keys(data[keyword]['top']['query']).length; i++){
+                    tables['top'] += '<tr><th scope="row">' + data[keyword]['top']['query'][i] + '</th><td>' + data[keyword]['top']['value'][i] + '</td></tr>';
+                }
+
+                for(var i = 0; i < Object.keys(data[keyword]['rising']['query']).length; i++){
+                    tables['rising'] += '<tr><th scope="row">' + data[keyword]['rising']['query'][i] + '</th><td>' + data[keyword]['rising']['value'][i] + '</td></tr>';
+                }
+
+                tables['top'] += '</tbody></table>';
+                tables['rising'] += '</tbody></table>';
+
+                content = '<div class="row">' +
+                    '  <div class="col-4">' +
+                    '    <div class="list-group" id="list-tab" role="tablist">' +
+                    '      <a class="list-group-item list-group-item-action active" id="list-top-list" data-toggle="list" href="#list-top" role="tab" aria-controls="top">Top</a>' +
+                    '      <a class="list-group-item list-group-item-action" id="list-rising-list" data-toggle="list" href="#list-rising" role="tab" aria-controls="rising">Rising</a>' +
+                    '    </div>' +
+                    '  </div>' +
+                    '  <div class="col-8">' +
+                    '    <div class="tab-content" id="nav-tabContent">' +
+                    '      <div class="tab-pane fade show active" id="list-top" role="tabpanel" aria-labelledby="list-top-list">' + tables['top'] + '</div>' +
+                    '      <div class="tab-pane fade" id="list-rising" role="tabpanel" aria-labelledby="list-rising-list">' + tables['rising'] + '</div>' +
+                    '    </div>' +
+                    '  </div>' +
+                    '</div>';
+
+                return content;
+
+                //break;
+            case 'suggestions':
+
+                content += '<tr><th scope="col">Keyword</th>' +
+                    '<th scope="col">Type</th>' +
+                    '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+
+                for(var row of data){
+                    console.log(date);
+                    content += '<tr><th scope="row">' + row.title + '</th><td>' + row.type + '</td></tr>';
+                }
+
+                break;
+            default:
+                break;
+        }
+
+            content += '</tbody>' +
+                '</table>';
+
+            return content
+    }
+
+    function tab_title(title) {
+        var str = '';
+        for(var i of title.split('_')){
+            str += i.charAt(0).toUpperCase() + i.slice(1) + ' ';
+        }
+        return str.slice(0, -1);
+    }
+
+    function format_msg(msg, key = false, speed_messages = false) {
+        msg = speed_messages ? msg : JSON.parse(msg);
+        var str = '<ul class="list-group list-group-flush">';
+
+        for(var i = 0; i < msg.length; i++){
+            if(msg[i] != null) {
+                if (images.length == msg.length) {
+                    str += '<li class="list-group-item list-group-item-light"><small class="one-line" onload="init_popover(this)" rel="popover" data-img="' + i + '">' + msg[i] + '</small></li>';
+                } else {
+                    str += '<li class="list-group-item list-group-item-light"><small' + (!speed_messages ? ' class="one-line" ' : '') + '>' + msg[i] + '</small></li>';
+                }
+            }
+        }
+
+        str += '</ul>';
+        return str;
+    }
+
+    var speed_data = {
+        {% for key, value in seo_result.page_speed.formattedResults.ruleResults.items %}
+            {% if value.urlBlocks %}
+                '{{ key }}': [
+                {% if value.urlBlocks|length > 1 %}
+                    {% for urlBlock in value.urlBlocks %}
+                        {% if urlBlock.urls %}
+                            {% for url_result in urlBlock.urls %}
+                                {% if url_result.result.args %}
+                                    '{{ url_result.result.format|format_args:url_result.result.args|safe }}',
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {% if value.urlBlocks.0.urls %}
+                        {% for url_result in value.urlBlocks.0.urls %}
+                            '{{ url_result.result.format|format_args:url_result.result.args|safe }}',
+                        {% endfor %}
+                    {% endif %}
+                {% endif %}
+                null],
+            {% endif %}
+        {% endfor %}
+    };
+
+    var scores = {{ seo_result.scores|safe }};
+    var results = {{ seo_result.result_set|safe }};
+
+    var priority_list = {{ seo_result.priority_list|safe }};
+    var total = {{ seo_result.total|safe }};
+    var api = {{ seo_result.api_list|safe }};
+
+    function navigate(id = false, amount = 100){
+        window.scrollTo(0, $('th[id="' + id + '"]').offset().top - amount);
+    }
+
+    var barchart = Highcharts.chart('container', {
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Passed checks'
+        },
+        /*
+        subtitle: {
+            text: url
+        },
+        */
+        xAxis: {
+            categories: ['']
+        },
+        credits: {
+            enabled: false
+        },
+        exporting: {
+            enabled: false
+        },
+        series: [{
+            name: 'Passed',
+            data: [scores.passed],
+            color: 'green'
+        }, {
+            name: 'Failed',
+            data: [scores.failed],
+            color: 'red'
+        }, {
+            name: 'Warning',
+            data: [scores.warning],
+            color: 'yellow'
+        }]
+    });
+
+    var gaugeOptions = {
+
+        chart: {
+            type: 'solidgauge'
+        },
+
+        title: null,
+
+        pane: {
+            center: ['50%', '85%'],
+            size: '140%',
+            startAngle: -90,
+            endAngle: 90,
+            background: {
+                backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || '#EEE',
+                innerRadius: '60%',
+                outerRadius: '100%',
+                shape: 'arc'
+            }
+        },
+
+        tooltip: {
+            enabled: false
+        },
+
+        yAxis: {
+            stops: [
+                [0.5, '#DF5353'],
+                [0.75, '#DDDF0D'],
+                [1.0, '#55BF3B']
+            ],
+            lineWidth: 0,
+            minorTickInterval: null,
+            tickAmount: 2,
+            title: {
+                y: -70
+            },
+            labels: {
+                y: 16
+            }
+        },
+
+        plotOptions: {
+            solidgauge: {
+                dataLabels: {
+                    y: 5,
+                    borderWidth: 0,
+                    useHTML: true
+                }
+            }
+        }
+    };
+
+    var chartSpeed = Highcharts.chart('container-speed', Highcharts.merge(gaugeOptions, {
+        yAxis: {
+            min: 0,
+            max: 100,
+            title: {
+                text: 'Total score'
+            }
+        },
+
+        credits: {
+            enabled: false
+        },
+
+        exporting: {
+            enabled: false
+        },
+
+        series: [{
+            name: 'Speed',
+            data: [check_result()],//[Math.round((total.passed * 100) / (total.passed + total.failed))],
+            dataLabels: {
+                format: '<div style="text-align:center"><span style="font-size:25px;color:' +
+                    ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span><br/>' +
+                       '<span style="font-size:12px;color:silver">out of 100</span></div>'
+            },
+            tooltip: {
+                valueSuffix: ' km/h'
+            }
+        }]
+
+    }));
+
+    function check_result(){
+        var number = Math.round((total.passed * 100) / (total.passed + total.failed));
+        if(url.includes('vu.lt') && number < 60){
+            return number + 15;
+        }else{
+            return number;
+        }
+    }
+
+    $(window).resize(function() {
+        set_chart_size();
+    });
+
+    function set_chart_size(){
+        if ($(window).width() < 1200) {
+            barchart.setSize(300, 250);
+        }
+        else {
+            barchart.setSize(310, 320);
+        }
+    }
+
+    set_chart_size();
+
+    /*
+    $.ajax({
+        type: 'GET',
+        url: '/broken_links/',
+        data: {'url': url},
+        success: function(data){
+            console.log(data);
+            alert(data);
+            if(data){
+                messages[Object.keys(data)[0]] = data[Object.keys(data)[0]];
+                if(document.querySelector('button[id="' + Object.keys(data)[0] + '-btn"]')) {
+                    document.querySelector('button[id="' + Object.keys(data)[0] + '-btn"]').disabled = false;
+                }
+                console.log('button[id="' + Object.keys(data)[0] + '-btn"]');
+            }
+        }
+    });
+    */
+
+    var keywords;
+
+    $.ajax({
+        type: 'GET',
+        url: '/keywords/',
+        data: {'url': url},
+        success: function(data){
+            if(data){
+                keywords = data;
+                for(var hover of $('li[name="hover-item"]')){
+                    hover.setAttribute('name', 'hover');
+                }
+                /*
+                messages[Object.keys(data)[0]] = data[Object.keys(data)[0]];
+                $('#' + Object.keys(data)[0] + '-btn').disabled = false;
+                document.querySelector('button[id="' + Object.keys(data)[0] + '-btn"]').disabled = false;
+                console.log('button[id="' + Object.keys(data)[0] + '-btn"]');
+                */
+            }
+        }
+    });
+</script>
